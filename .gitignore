@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# env files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# backend (NestJS)
+backend/dist/
+
+# frontend (Next.js)
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+frontend/*.tsbuildinfo
+
+# testing / coverage
+coverage/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# misc
+.DS_Store
+*.pem
+.vercel
