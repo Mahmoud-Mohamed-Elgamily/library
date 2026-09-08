@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum BorrowingStatus {
+  ACTIVE
+  RETURNED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(USER)
+
+  borrowings Borrowing[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+model Book {
+  id              String @id @default(cuid())
+  title           String
+  author          String
+  isbn            String @unique
+  category        String
+  totalCopies     Int
+  availableCopies Int
+
+  borrowings Borrowing[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([title])
+  @@index([author])
+  @@index([category])
+}
+
+model Borrowing {
+  id         String          @id @default(cuid())
+  userId     String
+  bookId     String
+  borrowedAt DateTime        @default(now())
+  returnedAt DateTime?
+  status     BorrowingStatus @default(ACTIVE)
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([bookId])
+  @@index([status])
+  @@index([userId, status])
+  @@index([bookId, status])
+}
