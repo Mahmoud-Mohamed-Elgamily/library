@@ -67,4 +67,24 @@ export class BorrowingsService {
             });
         });
     }
+
+    async findMyBorrowings(userId: string, query: BorrowingQueryDto) {
+        return this.prisma.borrowing.findMany({
+            where: { userId, status: query.status, },
+            include: { book: true },
+            orderBy: { borrowedAt: 'desc' },
+        });
+    }
+
+    async findAll(query: BorrowingQueryDto) {
+        return this.prisma.borrowing.findMany({
+            where: { status: query.status },
+            include: {
+                user: {
+                    select: { id: true, name: true, email: true, role: true }
+                }, book: true
+            },
+            orderBy: { borrowedAt: 'desc' },
+        });
+    }
 }
