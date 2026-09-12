@@ -1,13 +1,3 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-
-@ApiTags('App')
+import { Controller } from '@nestjs/common';
 @Controller()
-export class AppController {
-  @Get()
-  getHello() {
-    return {
-      message: "Library Management System API is Running"
-    }
-  }
-}
+export class AppController { }
