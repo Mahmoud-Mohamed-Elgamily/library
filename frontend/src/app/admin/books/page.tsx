@@ -3,11 +3,16 @@
 import { useState } from "react";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import AddBookModal from "@/components/AddBookModal";
+import EditBookModal from "@/components/editBookModal";
 
 export default function AdminBooksPage() {
   const [search, setSearch] = useState("");
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<
+  (typeof books)[number] | null
+>(null);
 
+const [isEditBookOpen, setIsEditBookOpen] = useState(false);
   const [books, setBooks] = useState([
     {
       id: 1,
@@ -189,32 +194,49 @@ export default function AdminBooksPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <button
-                          className="
-                            rounded-lg
-                            border
-                            border-zinc-200
-                            p-2
-                            text-zinc-600
-                            transition
-                            hover:bg-zinc-100
-                            hover:text-zinc-900
-                          "
-                        >
-                          <Pencil size={17} />
+                          onClick={() => {
+                            setSelectedBook(book);
+                            setIsEditBookOpen(true);
+                          }}
+                        className="
+                          rounded-lg
+                          border
+                          border-zinc-200
+                          p-2
+                          text-zinc-600
+                          transition
+                          hover:bg-zinc-100
+                          hover:text-zinc-900
+                        "
+                          >
+                        <Pencil size={17} />
                         </button>
 
                         <button
-                          className="
-                            rounded-lg
-                            border
-                            border-red-200
-                            p-2
-                            text-red-600
-                            transition
-                            hover:bg-red-50
-                          "
-                        >
-                          <Trash2 size={17} />
+                            onClick={() => {
+                              const confirmed = window.confirm(
+                                `Are you sure you want to delete "${book.title}"?`
+                              );
+
+                              if (confirmed) {
+                                setBooks((previousBooks) =>
+                                  previousBooks.filter(
+                                    (currentBook) => currentBook.id !== book.id
+                                  )
+                                );
+                              }
+                            }}
+                            className="
+                              rounded-lg
+                              border
+                              border-red-200
+                              p-2
+                              text-red-600
+                              transition
+                              hover:bg-red-50
+                            "
+                          >
+                            <Trash2 size={17} />
                         </button>
                       </div>
                     </td>
@@ -247,6 +269,21 @@ export default function AdminBooksPage() {
     ]);
   }}
 />
+           <EditBookModal
+              isOpen={isEditBookOpen}
+              onClose={() => {
+                setIsEditBookOpen(false);
+                setSelectedBook(null);
+              }}
+              book={selectedBook}
+              onSave={(updatedBook) => {
+                setBooks((previousBooks) =>
+                  previousBooks.map((book) =>
+                    book.id === updatedBook.id ? updatedBook : book
+                  )
+                );
+              }}
+            />
     </div>
   );
 }
