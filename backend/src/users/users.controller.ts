@@ -17,5 +17,5 @@ export class UsersController {
     @ApiOperation({ summary: 'Get All Registered Users' })
     @ApiResponse({ status: 200, description: 'Registered Users Retrieved Successfully!' })
     @ApiResponse({ status: 403, description: 'Only Admins Can View Registered Users' })
-    findAll() { return this.usersService.findAll }
+    findAll() { return this.usersService.findAll() }
 }
