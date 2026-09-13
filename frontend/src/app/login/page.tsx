@@ -98,7 +98,7 @@ export default function LoginPage() {
     <main
       className="relative min-h-screen bg-cover bg-center"
       style={{
-        backgroundImage: "url('/back 1.jpg')",
+        backgroundImage: "url('/back-1.jpg')",
       }}
     >
       {/* Dark background overlay */}

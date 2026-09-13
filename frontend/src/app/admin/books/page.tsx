@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import api from "@/lib/axios";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import AddBookModal from "@/components/AddBookModal";
 import EditBookModal from "@/components/editBookModal";
+import axios from "axios";
+
+type Book = {
+  id: number;
+  title: string;
+  author: string;
+  isbn: string;
+  category: string;
+  totalCopies: number;
+};
 
 export default function AdminBooksPage() {
   const [search, setSearch] = useState("");
@@ -13,35 +24,30 @@ export default function AdminBooksPage() {
 >(null);
 
 const [isEditBookOpen, setIsEditBookOpen] = useState(false);
-  const [books, setBooks] = useState([
-    {
-      id: 1,
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      isbn: "9780743273565",
-      category: "Fiction",
-      availableCopies: 4,
-      totalCopies: 6,
-    },
-    {
-      id: 2,
-      title: "Atomic Habits",
-      author: "James Clear",
-      isbn: "9780735211292",
-      category: "Self Development",
-      availableCopies: 2,
-      totalCopies: 4,
-    },
-    {
-      id: 3,
-      title: "Clean Code",
-      author: "Robert C. Martin",
-      isbn: "9780132350884",
-      category: "Programming",
-      availableCopies: 3,
-      totalCopies: 3,
-    },
-  ]);
+const [books, setBooks] = useState<Book[]>([]);
+const [isLoading, setIsLoading] = useState(true);
+const [error, setError] = useState("");
+
+useEffect(() => {
+  async function fetchBooks() {
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const response = await api.get("/books");
+
+      setBooks(response.data);
+    } catch (error) {
+      console.error("Books error:", error);
+      setError("Could not load books.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  fetchBooks();
+}, []);
+
 
   const filteredBooks = books.filter((book) => {
     const value = search.toLowerCase();
@@ -52,6 +58,8 @@ const [isEditBookOpen, setIsEditBookOpen] = useState(false);
       book.isbn.toLowerCase().includes(value)
     );
   });
+
+  
 
   return (
     <div className="space-y-8">
@@ -175,15 +183,7 @@ const [isEditBookOpen, setIsEditBookOpen] = useState(false);
                     </td>
 
                     <td className="px-6 py-4">
-                      <span
-                        className={
-                          book.availableCopies === 0
-                            ? "font-medium text-red-600"
-                            : "font-medium text-green-600"
-                        }
-                      >
-                        {book.availableCopies}
-                      </span>
+                      
 
                       <span className="text-zinc-400">
                         {" "}
@@ -213,30 +213,50 @@ const [isEditBookOpen, setIsEditBookOpen] = useState(false);
                         </button>
 
                         <button
-                            onClick={() => {
-                              const confirmed = window.confirm(
-                                `Are you sure you want to delete "${book.title}"?`
-                              );
+                          onClick={async () => {
+                            const confirmed = window.confirm(
+                              `Are you sure you want to delete "${book.title}"?`
+                            );
 
-                              if (confirmed) {
-                                setBooks((previousBooks) =>
-                                  previousBooks.filter(
-                                    (currentBook) => currentBook.id !== book.id
-                                  )
-                                );
+                            if (!confirmed) {
+                              return;
+                            }
+
+                            try {
+                              await api.delete(`/books/${book.id}`);
+
+                              setBooks((previousBooks) =>
+                                previousBooks.filter(
+                                  (currentBook) => currentBook.id !== book.id
+                                )
+                              );
+                            } catch (error) {
+                              if (axios.isAxiosError(error)) {
+                                if (error.response?.status === 404) {
+                                  alert("Book not found.");
+                                } else if (error.response?.status === 409) {
+                                  alert(
+                                    "This book cannot be deleted because it has active borrowings."
+                                  );
+                                } else {
+                                  alert("Could not delete the book.");
+                                }
+                              } else {
+                                alert("Could not delete the book.");
                               }
-                            }}
-                            className="
-                              rounded-lg
-                              border
-                              border-red-200
-                              p-2
-                              text-red-600
-                              transition
-                              hover:bg-red-50
-                            "
-                          >
-                            <Trash2 size={17} />
+                            }
+                          }}
+                          className="
+                            rounded-lg
+                            border
+                            border-red-200
+                            p-2
+                            text-red-600
+                            transition
+                            hover:bg-red-50
+                          "
+                        >
+                          <Trash2 size={17} />
                         </button>
                       </div>
                     </td>
@@ -257,16 +277,21 @@ const [isEditBookOpen, setIsEditBookOpen] = useState(false);
         </div>
       </div>
       <AddBookModal
-        isOpen={isAddBookOpen}
-        onClose={() => setIsAddBookOpen(false)}
-        onAddBook={(newBook) => {
-          setBooks((previousBooks) => [
-            ...previousBooks,
-            {
-              id: previousBooks.length + 1,
-              ...newBook,
-      },
-    ]);
+  isOpen={isAddBookOpen}
+  onClose={() => setIsAddBookOpen(false)}
+  onAddBook={async (newBook) => {
+    try {
+      const response = await api.post("/books", newBook);
+
+      setBooks((previousBooks) => [
+        ...previousBooks,
+        response.data,
+      ]);
+
+      setIsAddBookOpen(false);
+    } catch (error) {
+      console.error("Add book error:", error);
+    }
   }}
 />
            <EditBookModal

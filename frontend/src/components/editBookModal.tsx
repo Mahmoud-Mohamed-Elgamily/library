@@ -9,7 +9,6 @@ type Book = {
   author: string;
   isbn: string;
   category: string;
-  availableCopies: number;
   totalCopies: number;
 };
 
@@ -40,7 +39,6 @@ export default function EditBookModal({
       setAuthor(book.author);
       setIsbn(book.isbn);
       setCategory(book.category);
-      setAvailableCopies(String(book.availableCopies));
       setTotalCopies(String(book.totalCopies));
       setErrors([]);
     }
@@ -51,7 +49,11 @@ export default function EditBookModal({
   }
 
   function handleSubmit(event: React.FormEvent) {
+    
     event.preventDefault();
+    if (!book) {
+  return;
+}
 
     const newErrors: string[] = [];
 
@@ -91,14 +93,13 @@ export default function EditBookModal({
     }
 
     onSave({
-      ...book,
-      title,
-      author,
-      isbn,
-      category,
-      availableCopies: Number(availableCopies),
-      totalCopies: Number(totalCopies),
-    });
+  id: book.id,
+  title,
+  author,
+  isbn,
+  category,
+  totalCopies: Number(totalCopies),
+});
 
     onClose();
   }

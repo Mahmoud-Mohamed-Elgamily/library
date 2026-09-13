@@ -11,7 +11,6 @@ type AddBookModalProps = {
     author: string;
     isbn: string;
     category: string;
-    availableCopies: number;
     totalCopies: number;
   }) => void;
 };
@@ -24,7 +23,6 @@ export default function AddBookModal({
   const [author, setAuthor] = useState("");
   const [isbn, setIsbn] = useState("");
   const [category, setCategory] = useState("");
-  const [availableCopies, setAvailableCopies] = useState("");
   const [totalCopies, setTotalCopies] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -53,19 +51,8 @@ export default function AddBookModal({
       newErrors.push("Category is required.");
     }
 
-    if (!totalCopies || Number(totalCopies) < 1) {
-      newErrors.push("Total copies must be at least 1.");
-    }
-
-    if (!availableCopies || Number(availableCopies) < 0) {
-      newErrors.push("Available copies cannot be negative.");
-    }
-
-    if (Number(availableCopies) > Number(totalCopies)) {
-      newErrors.push(
-        "Available copies cannot be greater than total copies."
-      );
-    }
+    
+    
 
     if (newErrors.length > 0) {
       setErrors(newErrors);
@@ -79,10 +66,9 @@ export default function AddBookModal({
       author,
       isbn,
       category,
-      availableCopies: Number(availableCopies),
       totalCopies: Number(totalCopies),
     };
-
+  
     onAddBook(newBook);
     onClose();
 
@@ -148,10 +134,11 @@ export default function AddBookModal({
 
             <input
               type="text"
-              value={isbn}
-              onChange={(event) => setIsbn(event.target.value)}
-              placeholder="Enter ISBN"
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-200"
+                value={isbn}
+                onChange={(e) => setIsbn(e.target.value)}
+                placeholder="9780743273565"
+                required
+                className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-200"
             />
           </div>
 
@@ -170,22 +157,7 @@ export default function AddBookModal({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-zinc-700">
-                Available Copies
-              </label>
-
-              <input
-                type="number"
-                min="0"
-                value={availableCopies}
-                onChange={(event) =>
-                  setAvailableCopies(event.target.value)
-                }
-                placeholder="0"
-                className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-200"
-              />
-            </div>
+            
 
             <div>
               <label className="mb-2 block text-sm font-medium text-zinc-700">

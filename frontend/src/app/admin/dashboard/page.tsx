@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   Library,
@@ -7,36 +10,99 @@ import {
   BookMarked,
 } from "lucide-react";
 
+import api from "@/lib/axios";
+
+type DashboardData = {
+  totalBooks: number;
+  totalCopies: number;
+  availableCopies: number;
+  totalUsers: number;
+  activeBorrowings: number;
+  borrowedCopies: number;
+};
+
 export default function AdminDashboardPage() {
+  const [dashboardData, setDashboardData] =
+    useState<DashboardData | null>(null);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await api.get("/dashboard");
+
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error("Dashboard error:", error);
+        setError("Could not load dashboard data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchDashboard();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <p className="text-zinc-500">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl bg-red-50 p-4 text-red-600">
+        {error}
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="text-zinc-500">
+        No dashboard data available.
+      </div>
+    );
+  }
+
   const stats = [
     {
       title: "Total Books",
-      value: 120,
+      value: dashboardData.totalBooks,
       icon: BookOpen,
     },
     {
       title: "Total Copies",
-      value: 350,
+      value: dashboardData.totalCopies,
       icon: Library,
     },
     {
       title: "Available Copies",
-      value: 275,
+      value: dashboardData.availableCopies,
       icon: BookCheck,
     },
     {
       title: "Borrowed Copies",
-      value: 75,
+      value: dashboardData.borrowedCopies,
       icon: BookMarked,
     },
     {
       title: "Registered Users",
-      value: 48,
+      value: dashboardData.totalUsers,
       icon: Users,
     },
     {
       title: "Active Borrowings",
-      value: 31,
+      value: dashboardData.activeBorrowings,
       icon: RefreshCcw,
     },
   ];
