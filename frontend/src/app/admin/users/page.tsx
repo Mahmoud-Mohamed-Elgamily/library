@@ -61,12 +61,18 @@ export default function AdminUsersPage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-zinc-500">Loading users...</p>
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-[#e7ddd4] border-t-[#8a624d]" />
+
+        <p className="mt-4 text-sm text-stone-500">
+          Loading users...
+        </p>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="space-y-8">
@@ -87,8 +93,11 @@ export default function AdminUsersPage() {
       )}
 
       <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100">
-          <Users size={22} className="text-zinc-700" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f2e9df]">
+          <Users
+            size={22}
+            className="text-[#765448]"
+          />
         </div>
 
         <div>
@@ -124,14 +133,14 @@ export default function AdminUsersPage() {
             outline-none
             transition
             placeholder:text-zinc-400
-            focus:border-zinc-900
+            focus:border-[#8a624d]
             focus:ring-2
-            focus:ring-zinc-200
+            focus:ring-[#eadfd5]
           "
         />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#eadfd5] bg-white shadow-[0_4px_15px_rgba(80,60,45,0.04)]">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="border-b border-zinc-200 bg-zinc-50">

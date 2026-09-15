@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import axios from "axios";
+
+import api from "@/lib/axios";
 
 type Book = {
-  id: number;
+  id: string;
   title: string;
   author: string;
   isbn: string;
   category: string;
   totalCopies: number;
+  availableCopies: number;
 };
 
 type EditBookModalProps = {
@@ -29,9 +33,11 @@ export default function EditBookModal({
   const [author, setAuthor] = useState("");
   const [isbn, setIsbn] = useState("");
   const [category, setCategory] = useState("");
-  const [availableCopies, setAvailableCopies] = useState("");
   const [totalCopies, setTotalCopies] = useState("");
+
   const [errors, setErrors] = useState<string[]>([]);
+  const [serverError, setServerError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (book) {
@@ -40,7 +46,9 @@ export default function EditBookModal({
       setIsbn(book.isbn);
       setCategory(book.category);
       setTotalCopies(String(book.totalCopies));
+
       setErrors([]);
+      setServerError("");
     }
   }, [book]);
 
@@ -48,12 +56,14 @@ export default function EditBookModal({
     return null;
   }
 
-  function handleSubmit(event: React.FormEvent) {
-    
+  async function handleSubmit(
+    event: React.FormEvent
+  ) {
     event.preventDefault();
+
     if (!book) {
-  return;
-}
+      return;
+    }
 
     const newErrors: string[] = [];
 
@@ -73,17 +83,12 @@ export default function EditBookModal({
       newErrors.push("Category is required.");
     }
 
-    if (!totalCopies || Number(totalCopies) < 1) {
-      newErrors.push("Total copies must be at least 1.");
-    }
-
-    if (Number(availableCopies) < 0) {
-      newErrors.push("Available copies cannot be negative.");
-    }
-
-    if (Number(availableCopies) > Number(totalCopies)) {
+    if (
+      !totalCopies ||
+      Number(totalCopies) < 1
+    ) {
       newErrors.push(
-        "Available copies cannot be greater than total copies."
+        "Total copies must be at least 1."
       );
     }
 
@@ -92,21 +97,65 @@ export default function EditBookModal({
       return;
     }
 
-    onSave({
-  id: book.id,
-  title,
-  author,
-  isbn,
-  category,
-  totalCopies: Number(totalCopies),
-});
+    try {
+      setIsSaving(true);
+      setServerError("");
+      setErrors([]);
 
-    onClose();
+      const response = await api.patch(
+        `/books/${book.id}`,
+        {
+          title: title.trim(),
+          author: author.trim(),
+          isbn: isbn.trim(),
+          category: category.trim(),
+          totalCopies: Number(totalCopies),
+        }
+      );
+
+      onSave(response.data);
+
+      onClose();
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message;
+
+        if (error.response?.status === 400) {
+          setServerError(
+            message ||
+              "Please check the book information."
+          );
+        } else if (
+          error.response?.status === 404
+        ) {
+          setServerError(
+            "Book not found."
+          );
+        } else if (!error.response) {
+          setServerError(
+            "Cannot connect to the server."
+          );
+        } else {
+          setServerError(
+            message ||
+              "Could not update the book."
+          );
+        }
+      } else {
+        setServerError(
+          "Something went wrong."
+        );
+      }
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-zinc-900">
@@ -121,91 +170,140 @@ export default function EditBookModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100"
+            disabled={isSaving}
+            className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100"
           >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Title"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3"
-          />
 
-          <input
-            type="text"
-            value={author}
-            onChange={(event) => setAuthor(event.target.value)}
-            placeholder="Author"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3"
-          />
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">
+              Title
+            </label>
 
-          <input
-            type="text"
-            value={isbn}
-            onChange={(event) => setIsbn(event.target.value)}
-            placeholder="ISBN"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3"
-          />
-
-          <input
-            type="text"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            placeholder="Category"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3"
-          />
-
-          <div className="grid gap-4 sm:grid-cols-2">
             <input
-              type="number"
-              min="0"
-              value={availableCopies}
+              type="text"
+              value={title}
               onChange={(event) =>
-                setAvailableCopies(event.target.value)
+                setTitle(event.target.value)
               }
-              placeholder="Available Copies"
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3"
+              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">
+              Author
+            </label>
+
+            <input
+              type="text"
+              value={author}
+              onChange={(event) =>
+                setAuthor(event.target.value)
+              }
+              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">
+              ISBN
+            </label>
+
+            <input
+              type="text"
+              value={isbn}
+              onChange={(event) =>
+                setIsbn(event.target.value)
+              }
+              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">
+              Category
+            </label>
+
+            <input
+              type="text"
+              value={category}
+              onChange={(event) =>
+                setCategory(
+                  event.target.value
+                )
+              }
+              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">
+              Total Copies
+            </label>
 
             <input
               type="number"
               min="1"
               value={totalCopies}
-              onChange={(event) => setTotalCopies(event.target.value)}
-              placeholder="Total Copies"
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3"
+              onChange={(event) =>
+                setTotalCopies(
+                  event.target.value
+                )
+              }
+              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
             />
           </div>
 
+
           {errors.length > 0 && (
             <div className="rounded-xl bg-red-50 px-4 py-3">
-              {errors.map((error, index) => (
-                <p key={index} className="text-sm text-red-600">
-                  • {error}
-                </p>
-              ))}
+              {errors.map(
+                (error, index) => (
+                  <p
+                    key={index}
+                    className="text-sm text-red-600"
+                  >
+                    • {error}
+                  </p>
+                )
+              )}
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+
+          {serverError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {serverError}
+            </div>
+          )}
+
+
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-zinc-300 px-5 py-3"
+              disabled={isSaving}
+              className="rounded-xl border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              className="rounded-xl bg-zinc-900 px-5 py-3 text-white"
+              disabled={isSaving}
+              className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
             >
-              Save Changes
+              {isSaving
+                ? "Saving..."
+                : "Save Changes"}
             </button>
           </div>
         </form>

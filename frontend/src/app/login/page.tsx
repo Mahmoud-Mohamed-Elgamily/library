@@ -19,7 +19,6 @@ export default function LoginPage() {
 
     const newErrors: string[] = [];
 
-    // Email validation
     if (!email) {
       newErrors.push("Email is required.");
     } else {
@@ -30,7 +29,6 @@ export default function LoginPage() {
       }
     }
 
-    // Password validation
     if (!password) {
       newErrors.push("Password is required.");
     } else {
@@ -47,7 +45,6 @@ export default function LoginPage() {
       }
     }
 
-    // Stop if validation failed
     if (newErrors.length > 0) {
       setErrors(newErrors);
       return;
@@ -57,7 +54,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Send login information to backend
       const response = await api.post("/auth/login", {
         email,
         password,
@@ -65,11 +61,9 @@ export default function LoginPage() {
 
       const { accessToken, user } = response.data;
 
-      // Save login information
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Redirect depending on role
       if (user.role === "ADMIN") {
         router.push("/admin/dashboard");
       } else {
@@ -101,13 +95,11 @@ export default function LoginPage() {
         backgroundImage: "url('/back-1.jpg')",
       }}
     >
-      {/* Dark background overlay */}
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="relative z-10 flex min-h-screen items-center px-8 md:px-16">
         <div className="grid w-full grid-cols-1 items-center gap-10 md:grid-cols-[0.8fr_1.2fr]">
 
-          {/* Left side */}
           <div className="hidden text-white md:block">
             <div className="mb-8 h-1 w-20 bg-white/70" />
 
@@ -122,11 +114,9 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Login card */}
           <div className="flex justify-center md:justify-start">
             <div className="w-full max-w-md rounded-3xl bg-white/95 p-7 shadow-2xl backdrop-blur-sm">
 
-              {/* Header */}
               <div className="mb-8 flex flex-col items-center text-center">
                 <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900 text-white">
                   <BookOpen size={30} />
@@ -141,10 +131,8 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              {/* Login form */}
               <form onSubmit={handleLogin} className="space-y-6">
 
-                {/* Email */}
                 <div>
                   <label
                     htmlFor="email"
@@ -186,7 +174,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
                   <label
                     htmlFor="password"
@@ -228,7 +215,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Errors */}
                 {errors.length > 0 && (
                   <div className="rounded-lg bg-red-50 px-4 py-3">
                     {errors.map((error, index) => (
@@ -242,7 +228,6 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                {/* Login button */}
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -270,7 +255,6 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Bottom divider */}
               <div className="mt-7 flex items-center gap-4">
                 <div className="h-px flex-1 bg-zinc-200" />
 
