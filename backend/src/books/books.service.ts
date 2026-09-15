@@ -28,17 +28,20 @@ export class BooksService {
     async findAll(query: BookQueryDto) {
         const search = query.search?.trim()
         return this.prisma.book.findMany({
-            where: search ? {
-                OR: [{ title: { contains: search, mode: "insensitive", } },
-                { author: { contains: search, mode: "insensitive", } },
-                { isbn: { contains: search, mode: "insensitive", } }]
-            } : undefined, orderBy: { createdAt: 'desc' }
+            where: {
+                deletedAt: null,
+                ...(search ? {
+                    OR: [{ title: { contains: search, mode: "insensitive", } },
+                    { author: { contains: search, mode: "insensitive", } },
+                    { isbn: { contains: search, mode: "insensitive", } }]
+                } : {})
+            }, orderBy: { createdAt: 'desc' }
         })
     }
 
     async findOne(id: string) {
-        const book = await this.prisma.book.findUnique({
-            where: { id }
+        const book = await this.prisma.book.findFirst({
+            where: { id, deletedAt: null }
         })
         if (!book) {
             throw new NotFoundException('Book not found')
@@ -47,7 +50,7 @@ export class BooksService {
     }
 
     async update(id: string, updateBookDto: UpdateBookDto) {
-        const existingBook = await this.prisma.book.findUnique({ where: { id } })
+        const existingBook = await this.prisma.book.findFirst({ where: { id, deletedAt: null } })
 
         if (!existingBook) {
             throw new NotFoundException("Book Not Found")
@@ -82,8 +85,8 @@ export class BooksService {
     }
 
     async remove(id: string) {
-        const existingBook = await this.prisma.book.findUnique({
-            where: { id }
+        const existingBook = await this.prisma.book.findFirst({
+            where: { id, deletedAt: null }
         })
 
         if (!existingBook) {
@@ -98,8 +101,6 @@ export class BooksService {
             throw new ConflictException("Cannot Remove a book with active borrowings")
         }
 
-        return this.prisma.book.delete({
-            where: { id }
-        })
+        return this.prisma.book.update({ where: { id }, data: { deletedAt: new Date() } })
     }
 }

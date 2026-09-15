@@ -41,9 +41,8 @@ model Book {
   category        String
   totalCopies     Int
   availableCopies Int
-
+  deletedAt DateTime?
   borrowings Borrowing[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

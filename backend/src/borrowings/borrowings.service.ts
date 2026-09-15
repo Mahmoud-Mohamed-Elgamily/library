@@ -11,7 +11,7 @@ export class BorrowingsService {
     async create(userId: string, createBorrowingDto: CreateBorrowingDto) {
         const { bookId } = createBorrowingDto;
         return this.prisma.$transaction(async (tx) => {
-            const book = await tx.book.findUnique({ where: { id: bookId } })
+            const book = await tx.book.findFirst({ where: { id: bookId, deletedAt: null } })
 
             if (!book) throw new NotFoundException("Book Not Found")
 

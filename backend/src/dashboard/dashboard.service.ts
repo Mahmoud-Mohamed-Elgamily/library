@@ -14,9 +14,9 @@ export class DashboardService {
 
     async getAdminDashboard() {
         const [totalBooks, totalCopiesResult, availableCopiesResult, totalUsers, activeBorrowings] = await Promise.all([
-            this.prisma.book.count(),
-            this.prisma.book.aggregate({ _sum: { totalCopies: true } }),
-            this.prisma.book.aggregate({ _sum: { availableCopies: true } }),
+            this.prisma.book.count({ where: { deletedAt: null } }),
+            this.prisma.book.aggregate({ where: { deletedAt: null }, _sum: { totalCopies: true } }),
+            this.prisma.book.aggregate({ where: { deletedAt: null }, _sum: { availableCopies: true } }),
             this.prisma.user.count(),
             this.prisma.borrowing.count({ where: { status: 'ACTIVE' } })
         ]);
