@@ -29,6 +29,18 @@ export default function AddBookModal({
   if (!isOpen) {
     return null;
   }
+  function resetForm() {
+  setTitle("");
+  setAuthor("");
+  setIsbn("");
+  setCategory("");
+  setTotalCopies("");
+  setErrors([]);
+}
+function handleClose() {
+  resetForm();
+  onClose();
+}
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -44,8 +56,10 @@ export default function AddBookModal({
     }
 
     if (!isbn.trim()) {
-      newErrors.push("ISBN is required.");
-    }
+  newErrors.push("ISBN is required.");
+} else if (!/^\d{10}$|^\d{13}$/.test(isbn)) {
+  newErrors.push("ISBN must contain exactly 10 or 13 digits.");
+}
 
     if (!category.trim()) {
       newErrors.push("Category is required.");
@@ -70,6 +84,7 @@ export default function AddBookModal({
     };
   
     onAddBook(newBook);
+    resetForm();
     onClose();
 
     
@@ -89,9 +104,9 @@ export default function AddBookModal({
             </p>
           </div>
 
-          <button
+           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100"
           >
             <X size={20} />
@@ -132,13 +147,17 @@ export default function AddBookModal({
               ISBN
             </label>
 
-            <input
+           <input
               type="text"
-                value={isbn}
-                onChange={(e) => setIsbn(e.target.value)}
-                placeholder="9780743273565"
-                required
-                className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-200"
+              inputMode="numeric"
+              maxLength={13}
+              value={isbn}
+              onChange={(event) => {
+                const value = event.target.value.replace(/\D/g, "");
+                setIsbn(value);
+              }}
+              placeholder="Enter book ISBN"
+              className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
             />
           </div>
 
@@ -188,7 +207,7 @@ export default function AddBookModal({
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-xl border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
             >
               Cancel

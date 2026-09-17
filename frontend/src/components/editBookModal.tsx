@@ -76,8 +76,10 @@ export default function EditBookModal({
     }
 
     if (!isbn.trim()) {
-      newErrors.push("ISBN is required.");
-    }
+  newErrors.push("ISBN is required.");
+} else if (!/^\d{10}$|^\d{13}$/.test(isbn)) {
+  newErrors.push("ISBN must contain exactly 10 or 13 digits.");
+}
 
     if (!category.trim()) {
       newErrors.push("Category is required.");
@@ -219,10 +221,13 @@ export default function EditBookModal({
 
             <input
               type="text"
+              inputMode="numeric"
+              maxLength={13}
               value={isbn}
-              onChange={(event) =>
-                setIsbn(event.target.value)
-              }
+              onChange={(event) => {
+                const value = event.target.value.replace(/\D/g, "");
+                setIsbn(value);
+              }}
               className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none transition focus:border-[#8a624d] focus:ring-2 focus:ring-[#eadfd5]"
             />
           </div>
