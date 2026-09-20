@@ -1,98 +1,469 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Library Management System — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API for the Library Management System, built with **NestJS**, **Prisma**, and **PostgreSQL (Neon)**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The backend provides authentication, role-based authorization, book management, borrowing management, user listing, and dashboard statistics.
 
-## Description
+## Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **NestJS**
+- **Prisma ORM**
+- **PostgreSQL**
+- **Neon PostgreSQL**
+- **JWT** authentication
+- **Passport / passport-jwt**
+- **bcrypt**
+- **Swagger / OpenAPI**
+- **class-validator / class-transformer**
 
-## Project setup
+## Features
 
-```bash
-$ npm install
+### Authentication
+- Login for registered users
+- JWT access tokens
+- Password verification using bcrypt
+- Role-based authentication and authorization
+- Protected endpoints using JWT guards
+- Admin/User role restrictions
+
+### Books
+Admins can:
+- Create books
+- View books
+- Update books
+- Remove books
+
+Authenticated users can:
+- Browse books
+- Search books by title, author, or ISBN
+- View book details and availability
+
+Book fields:
+
+- `id`
+- `title`
+- `author`
+- `isbn`
+- `category`
+- `totalCopies`
+- `availableCopies`
+- `deletedAt`
+- `createdAt`
+- `updatedAt`
+
+### Borrowings
+The backend supports:
+
+- Borrowing available books
+- Preventing borrowing when `availableCopies` is `0`
+- Preventing duplicate active borrowing of the same book by the same user
+- Automatically decreasing available copies when borrowing
+- Returning books
+- Automatically increasing available copies when returning
+- Preserving returned borrowing records as history
+- Restricting returns to the user who owns the borrowing
+- Admin access to library-wide borrowing activity
+
+Borrowing operations that update both the borrowing and book records are handled inside Prisma transactions.
+
+### Users
+Admins can view all registered users.
+
+Returned user data intentionally excludes `passwordHash`.
+
+### Dashboard
+
+#### Admin dashboard
+Returns:
+
+- `totalBooks`
+- `totalCopies`
+- `availableCopies`
+- `borrowedCopies`
+- `totalUsers`
+- `activeBorrowings`
+
+#### User dashboard
+Returns:
+
+- `currentBooks`
+- `activeCount`
+- `recentHistory`
+
+## Role Permissions
+
+| Operation | Admin | User |
+|---|:---:|:---:|
+| Login | ✅ | ✅ |
+| View books | ✅ | ✅ |
+| Search books | ✅ | ✅ |
+| View book details | ✅ | ✅ |
+| Create book | ✅ | ❌ |
+| Update book | ✅ | ❌ |
+| Delete book | ✅ | ❌ |
+| Borrow book | ✅* | ✅ |
+| Return own borrowing | ✅* | ✅ |
+| View own borrowings | ✅ | ✅ |
+| View all borrowings | ✅ | ❌ |
+| View registered users | ✅ | ❌ |
+| View dashboard | ✅ | ✅ |
+
+`*` Access depends on the endpoint protection and authenticated role configuration.
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Access |
+|---|---|---|
+| `POST` | `/auth/login` | Public |
+
+### Books
+
+| Method | Endpoint | Access |
+|---|---|---|
+| `GET` | `/books` | Authenticated |
+| `GET` | `/books/:id` | Authenticated |
+| `POST` | `/books` | Admin |
+| `PATCH` | `/books/:id` | Admin |
+| `DELETE` | `/books/:id` | Admin |
+
+### Borrowings
+
+| Method | Endpoint | Access |
+|---|---|---|
+| `POST` | `/borrowings` | Authenticated User |
+| `PATCH` | `/borrowings/:id/return` | Authenticated User |
+| `GET` | `/borrowings/me` | Authenticated User |
+| `GET` | `/borrowings` | Admin |
+
+### Users
+
+| Method | Endpoint | Access |
+|---|---|---|
+| `GET` | `/users` | Admin |
+
+### Dashboard
+
+| Method | Endpoint | Access |
+|---|---|---|
+| `GET` | `/dashboard` | Admin / User |
+
+## Database Design
+
+The backend uses three main models:
+
+### User
+
+- `id`
+- `name`
+- `email`
+- `passwordHash`
+- `role`
+- `createdAt`
+- `updatedAt`
+
+### Book
+
+- `id`
+- `title`
+- `author`
+- `isbn`
+- `category`
+- `totalCopies`
+- `availableCopies`
+- `deletedAt`
+- `createdAt`
+- `updatedAt`
+
+### Borrowing
+
+- `id`
+- `userId`
+- `bookId`
+- `borrowedAt`
+- `returnedAt`
+- `status`
+- `createdAt`
+- `updatedAt`
+
+### Relationships
+
+```text
+User 1 ────────< Borrowing >──────── 1 Book
 ```
 
-## Compile and run the project
+A user can have many borrowing records, and a book can have many borrowing records.
 
-```bash
-# development
-$ npm run start
+## Important Business Rules
 
-# watch mode
-$ npm run start:dev
+- ISBN values must be unique.
+- A book must have at least one total copy.
+- Available copies cannot go below zero.
+- A user cannot have more than one active borrowing for the same book.
+- A book cannot be borrowed when no copies are available.
+- Returning a book restores one available copy.
+- Only the borrower can return their active borrowing.
+- Returned borrowing records remain in the database as history.
+- Books with active borrowings cannot be removed.
+- Deleted books cannot appear in the normal book catalog.
+- Deleted books cannot be borrowed.
+- Admin-only operations are protected by role guards.
 
-# production mode
-$ npm run start:prod
+## Soft Delete
+
+Books use **soft deletion**.
+
+When an admin removes a book, the backend does not physically delete the database row. Instead:
+
+```text
+deletedAt = current timestamp
 ```
 
-## Run tests
+The book is then excluded from normal book queries.
 
-```bash
-# unit tests
-$ npm run test
+This preserves historical borrowing records and avoids foreign-key conflicts with the `Borrowing` table.
 
-# e2e tests
-$ npm run test:e2e
+Existing borrowing history remains available after a book is removed.
 
-# test coverage
-$ npm run test:cov
+## Project Structure
+
+```text
+backend/
+├── prisma/
+│   ├── migrations/
+│   ├── schema.prisma
+│   ├── seed.ts
+│   └── prisma.config.ts
+│
+├── src/
+│   ├── auth/
+│   │   ├── decorators/
+│   │   ├── dto/
+│   │   ├── guards/
+│   │   ├── strategies/
+│   │   ├── auth.controller.ts
+│   │   ├── auth.module.ts
+│   │   └── auth.service.ts
+│   │
+│   ├── books/
+│   │   ├── dto/
+│   │   ├── books.controller.ts
+│   │   ├── books.module.ts
+│   │   └── books.service.ts
+│   │
+│   ├── borrowings/
+│   │   ├── dto/
+│   │   ├── borrowings.controller.ts
+│   │   ├── borrowings.module.ts
+│   │   └── borrowings.service.ts
+│   │
+│   ├── dashboard/
+│   │   ├── dashboard.controller.ts
+│   │   ├── dashboard.module.ts
+│   │   └── dashboard.service.ts
+│   │
+│   ├── users/
+│   │   ├── users.controller.ts
+│   │   ├── users.module.ts
+│   │   └── users.service.ts
+│   │
+│   ├── prisma/
+│   │   ├── prisma.module.ts
+│   │   └── prisma.service.ts
+│   │
+│   └── main.ts
+│
+├── .env
+├── .env.example
+├── package.json
+└── README.md
 ```
 
-## Deployment
+## Environment Variables
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Create a `.env` file inside the `backend` directory:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```env
+DATABASE_URL="your-neon-database-url"
+JWT_SECRET="your-jwt-secret"
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Do not commit real secrets.
 
-## Resources
+Use `.env.example` as the environment variable template.
 
-Check out a few resources that may come in handy when working with NestJS:
+## Installation
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+From the repository root:
 
-## Support
+```bash
+cd backend
+npm install
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Prisma Setup
 
-## Stay in touch
+Generate the Prisma client:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npx prisma generate
+```
+
+Apply database migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+Seed the database:
+
+```bash
+npx prisma db seed
+```
+
+Prisma migrations are stored under:
+
+```text
+prisma/migrations/
+```
+
+After changing `schema.prisma`, create a named migration:
+
+```bash
+npx prisma migrate dev --name <migration-name>
+```
+
+Then regenerate the client:
+
+```bash
+npx prisma generate
+```
+
+## Seeded Accounts
+
+The seed includes the following development accounts.
+
+### Admin
+
+```text
+Email: admin@email.com
+Password: Admin123!
+Role: ADMIN
+```
+
+### User
+
+```text
+Email: user@email.com
+Password: User123!
+Role: USER
+```
+
+These credentials are for development/testing only.
+
+## Running the Backend
+
+Development:
+
+```bash
+npm run start:dev
+```
+
+The API runs on:
+
+```text
+http://localhost:3001
+```
+
+## Swagger
+
+Swagger / OpenAPI documentation is available at:
+
+```text
+http://localhost:3001/api
+```
+
+Use the **Authorize** button in Swagger to provide the JWT access token returned from `/auth/login`.
+
+## Validation and Error Handling
+
+The backend uses request validation and consistent HTTP status codes.
+
+Common responses:
+
+| Status | Meaning |
+|---|---|
+| `200` | Request completed successfully |
+| `201` | Resource created successfully |
+| `400` | Invalid request data |
+| `401` | Authentication required or invalid |
+| `403` | Insufficient permissions |
+| `404` | Resource not found |
+| `409` | Business-rule conflict |
+
+Examples of business-rule conflicts include:
+
+- Duplicate ISBN
+- Borrowing an unavailable book
+- Duplicate active borrowing
+- Returning an already-returned borrowing
+- Removing a book with an active borrowing
+
+## Manual Testing
+
+The backend was manually tested through Swagger and through the integrated application.
+
+Tested areas include:
+
+- Admin login
+- User login
+- Book CRUD
+- Book search
+- Duplicate ISBN handling
+- Borrowing available books
+- Blocking unavailable books
+- Blocking duplicate active borrowings
+- Returning books
+- Preventing unauthorized returns
+- Borrowing history
+- Admin borrowing activity
+- Admin user listing
+- Admin dashboard
+- User dashboard
+- Role-based access restrictions
+- Soft-deleted book behavior
+
+## Development Notes
+
+- Prisma is used as the ORM for PostgreSQL.
+- The PostgreSQL database is hosted on Neon.
+- JWT is used for stateless authentication.
+- Passwords are stored as bcrypt hashes.
+- Role guards protect Admin-only resources.
+- Borrowing and returning use database transactions to keep book availability and borrowing state consistent.
+- Historical borrowing records are preserved.
+- Soft-deleted books are excluded from normal catalog queries.
+
+## Git Workflow
+
+For database schema changes:
+
+```bash
+npx prisma migrate dev --name <migration-name>
+npx prisma generate
+```
+
+Then commit the schema, migration, and related backend changes.
+
+For normal code changes:
+
+```bash
+git add .
+git commit -m "your commit message"
+git push origin main
+```
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This backend was developed as part of an educational Library Management System project.
